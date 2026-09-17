@@ -1,4 +1,7 @@
+from unittest.mock import patch
+
 from httpx import ASGITransport, AsyncClient
+import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
@@ -10,6 +13,12 @@ from src.main import app
 
 test_engine = create_async_engine(settings.TEST_DATABASE_URL, poolclass=NullPool)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False)
+
+
+@pytest.fixture(autouse=True)
+def mock_celery():
+    with patch("src.services.user.send_welcome_email.delay") as mock:
+        yield mock
 
 
 @pytest_asyncio.fixture(autouse=True)
