@@ -31,8 +31,10 @@ class Article(Base):
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
     is_deleted: Mapped[bool] = mapped_column(default=False)
 
-    __table_args__ = Index(
-        "idx_articles_search",
-        text("to_tsvector('russian'::regconfig, (title::text || ' '::text) || content)"),
-        postgresql_using="gin",
+    __table_args__ = (
+        Index(
+            "idx_articles_search",
+            text("to_tsvector('russian'::regconfig, (title::text || ' '::text) || content)"),
+            postgresql_using="gin",
+        ),
     )
