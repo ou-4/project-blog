@@ -35,6 +35,8 @@ jobs:
       MINIO_ENDPOINT: localhost:9000
       MINIO_BUCKET: articles
       CELERY_BROKER_URL: amqp://guest:guest@localhost:5672//
+      MINIO_PUBLIC_URL: http://localhost:9000
+      COOKIE_SECURE: false
 
     steps:
       - uses: actions/checkout@v4
