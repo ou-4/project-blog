@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Text, func
+from sqlalchemy import ForeignKey, Index, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.base import Base
@@ -30,3 +30,11 @@ class Article(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
     is_deleted: Mapped[bool] = mapped_column(default=False)
+
+    __table_args__ = (
+        Index(
+            "idx_articles_search",
+            text("to_tsvector('russian', title || ' ' || content)"),
+            postgresql_using="gin",
+        ),
+    )
