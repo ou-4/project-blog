@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.session import get_db
-from src.schemas.article import ArticleCreate, ArticleListParams, ArticleOut, ArticleUpdate
+from src.schemas.article import (
+    ArticleCreate,
+    ArticleListParams,
+    ArticleListResponse,
+    ArticleOut,
+    ArticleUpdate,
+)
 from src.services.article import (
     create_article as create_article_serv,
     delete_article as delete_article_serv,
@@ -15,7 +21,7 @@ from src.services.article import (
 router_article = APIRouter(prefix="/articles", tags=["articles"])
 
 
-@router_article.get("/")
+@router_article.get("/", response_model=ArticleListResponse)
 async def get_articles(
     pagination: ArticleListParams = Depends(), session: AsyncSession = Depends(get_db)
 ):

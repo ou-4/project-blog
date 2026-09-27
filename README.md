@@ -28,6 +28,9 @@ cp .env.example .env
 docker compose up --build
 ```
 
+# Применить миграции
+make migrate
+
 API: `http://localhost:8000`
 Swagger: `http://localhost:8000/docs`
 

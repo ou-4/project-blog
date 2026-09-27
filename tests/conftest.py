@@ -6,12 +6,12 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
-from src.config import settings
+from src.config import test_settings
 from src.db.base import Base
 from src.db.session import get_db
 from src.main import app
 
-test_engine = create_async_engine(settings.TEST_DATABASE_URL, poolclass=NullPool)
+test_engine = create_async_engine(test_settings.TEST_DATABASE_URL, poolclass=NullPool)
 TestSessionLocal = async_sessionmaker(test_engine, expire_on_commit=False)
 
 
@@ -42,3 +42,15 @@ async def client():
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def auth_client(client):
+    _ = await client.post(
+        "/auth/register", json={"email": "etest@bk.ru", "password": "qwerty12345"}
+    )
+    response2 = await client.post(
+        "/auth/login", json={"email": "etest@bk.ru", "password": "qwerty12345"}
+    )
+    assert response2.status_code == 200
+    return client

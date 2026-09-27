@@ -1,5 +1,6 @@
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
 from src.repositories.article import (
     create_article_repo,
@@ -9,7 +10,10 @@ from src.repositories.article import (
     update_article_repo,
 )
 from src.repositories.category import get_category_by_id
+from src.schemas.article import ArticleListResponse
 from src.services.s3 import upload_file
+
+ALLOWED_TYPES = ["image/jpeg", "image/png"]
 
 
 async def create_article(
@@ -19,6 +23,7 @@ async def create_article(
         raise HTTPException(status_code=404, detail="Категории такой нет")
 
     article = await create_article_repo(session, title, content, category_id, image_url)
+    await session.commit()
     return article
 
 
@@ -29,8 +34,13 @@ async def get_articles(
     category_id: int | None = None,
     search: str | None = None,
 ):
-    articles = await get_articles_repo(session, page_number, page_size, category_id, search)
-    return articles
+    articles, total = await get_articles_repo(session, page_number, page_size, category_id, search)
+    return ArticleListResponse(
+        items=articles,
+        total=total,
+        page_number=page_number,
+        page_size=page_size,
+    )
 
 
 async def get_article_by_id(session: AsyncSession, article_id: int):
@@ -57,6 +67,7 @@ async def update_article(session, article_id, title, content, category_id, image
             raise HTTPException(status_code=404, detail="Category not found")
 
     updated = await update_article_repo(session, article_id, title, content, category_id, image_url)
+    await session.commit()
     return updated
 
 
@@ -69,7 +80,9 @@ async def delete_article(session: AsyncSession, article_id: int):
     if article.is_deleted:
         raise HTTPException(status_code=404, detail="Артикул уже удален")
 
-    return await delete_article_repo(session, article_id)
+    delete = await delete_article_repo(session, article_id)
+    await session.commit()
+    return delete
 
 
 async def upload_article_image(session: AsyncSession, article_id: int, file: UploadFile):
@@ -81,9 +94,10 @@ async def upload_article_image(session: AsyncSession, article_id: int, file: Upl
     if article.is_deleted:
         raise HTTPException(status_code=404, detail="Данный артикуль удален")
 
-    content = await file.read()
+    if file.content_type not in ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Неверный тип данных")
 
-    url = upload_file(content, file.filename)
+    url = await run_in_threadpool(upload_file, file.file, file.filename)
 
     article.image_url = url
     await session.commit()

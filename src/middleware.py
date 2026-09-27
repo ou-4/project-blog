@@ -8,6 +8,7 @@ PUBLIC_PATHS = [
     "/auth/login",
     "/health",
     "/docs",
+    "/docs/",
     "/openapi.json",
     "/categories",
     "/articles",
@@ -15,7 +16,11 @@ PUBLIC_PATHS = [
 
 
 async def check_auth(request: Request, call_next):
-    if any(request.url.path.startswith(prefix) for prefix in PUBLIC_PATHS):
+    if any(request.url.path.startswith(prefix) for prefix in PUBLIC_PATHS) and (
+        request.method == "GET"
+        or request.url.path.startswith("/auth/register")
+        or request.url.path.startswith("/auth/login")
+    ):
         return await call_next(request)
 
     token = request.cookies.get("access_token")

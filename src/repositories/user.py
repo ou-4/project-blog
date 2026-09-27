@@ -13,6 +13,5 @@ async def get_user_by_email(session: AsyncSession, email: str):
 async def create_user(session: AsyncSession, email: str, password: str):
     new_user = User(email=email, password=password)
     session.add(new_user)
-    await session.commit()
-    await session.refresh(new_user)
+    await session.flush()
     return new_user

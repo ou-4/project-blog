@@ -26,6 +26,7 @@ class ArticleOut(BaseModel):
     image_url: str | None
     created_at: datetime
     updated_at: datetime
+    model_config = {"from_attributes": True}
 
 
 class ArticleListParams(BaseModel):
@@ -33,3 +34,10 @@ class ArticleListParams(BaseModel):
     category_id: int | None = Query(None)
     page_number: int = Query(1, ge=1)
     page_size: int = Query(10, ge=1, le=100)
+
+
+class ArticleListResponse(BaseModel):
+    items: list[ArticleOut]
+    total: int
+    page_number: int
+    page_size: int

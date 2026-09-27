@@ -13,8 +13,7 @@ async def repo_get_categories(session: AsyncSession):
 async def repo_create_category(session: AsyncSession, name: str):
     new_category = Category(name=name)
     session.add(new_category)
-    await session.commit()
-    await session.refresh(new_category)
+    await session.flush()
     return new_category
 
 

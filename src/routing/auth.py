@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config import settings
 from src.db.session import get_db
 from src.schemas.user import UserCreate, UserLogin, UserOut
 from src.services.auth import create_access_token
@@ -18,5 +19,5 @@ async def register(data: UserCreate, session: AsyncSession = Depends(get_db)):
 async def login(data: UserLogin, response: Response, session: AsyncSession = Depends(get_db)):
     user = await authenticate_user(session, data)
     token = create_access_token(user.id)
-    response.set_cookie("access_token", token)
+    response.set_cookie("access_token", token, httponly=True, secure=settings.COOKIE_SECURE)
     return user

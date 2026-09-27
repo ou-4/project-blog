@@ -14,6 +14,7 @@ async def register_user(session: AsyncSession, data: UserCreate):
         hashed_pswd = bcrypt.hashpw(data.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         new_user = await create_user(session, data.email, hashed_pswd)
         send_welcome_email.delay(data.email)
+        await session.commit()
         return new_user
     else:
         raise HTTPException(status_code=409, detail="Пользователь с таким email уже существует")
