@@ -68,6 +68,7 @@ async def update_article(session, article_id, title, content, category_id, image
 
     updated = await update_article_repo(session, article_id, title, content, category_id, image_url)
     await session.commit()
+    await session.refresh(updated)
     return updated
 
 
