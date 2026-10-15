@@ -15,9 +15,6 @@ async def embed(text: str):
         return response.json()["embeddings"][0]
 
 
-client = OpenAI(api_key=settings.GROQ_API_KEY, base_url=settings.GROQ_URL)
-
-
 def generate(prompt: str):
     client = OpenAI(api_key=settings.GROQ_API_KEY, base_url=settings.GROQ_URL)
     response = client.responses.create(
