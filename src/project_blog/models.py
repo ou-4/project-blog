@@ -1,0 +1,50 @@
+from datetime import datetime
+
+from pgvector.sqlalchemy import Vector
+from sqlalchemy import ForeignKey, Index, Text, func, text
+from sqlalchemy.orm import Mapped, mapped_column
+
+from src.config import settings
+from src.db.base import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class Category(Base):
+    __tablename__ = "categories"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(unique=True)
+
+
+class Article(Base):
+    __tablename__ = "articles"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column()
+    content: Mapped[str] = mapped_column(Text)
+    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
+    image_url: Mapped[str | None] = mapped_column(nullable=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+    is_deleted: Mapped[bool] = mapped_column(default=False)
+
+    __table_args__ = (
+        Index(
+            "idx_articles_search",
+            text("to_tsvector('russian'::regconfig, (title::text || ' '::text) || content)"),
+            postgresql_using="gin",
+        ),
+    )
+
+
+class ArticleChunk(Base):
+    __tablename__ = "article_chunks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    article_id: Mapped[int] = mapped_column(ForeignKey("articles.id"))
+    content: Mapped[str] = mapped_column(Text)
+    embedding = mapped_column(Vector(settings.EMBEDDING_DIM))
