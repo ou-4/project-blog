@@ -15,7 +15,7 @@ from src.services.article import (
     get_article_by_id,
     get_articles as get_articles_serv,
     update_article as update_article_serv,
-    upload_article_image,
+    upload_image as upload_image_serv,
 )
 
 router_article = APIRouter(prefix="/articles", tags=["articles"])
@@ -42,7 +42,7 @@ async def get_article(article_id: int, session: AsyncSession = Depends(get_db)):
 @router_article.post("/", response_model=ArticleOut)
 async def create_article(data: ArticleCreate, session: AsyncSession = Depends(get_db)):
     return await create_article_serv(
-        session, data.title, data.content, data.category_id, data.image_url
+        session, data.title, data.content, data.category_id, data.image_key
     )
 
 
@@ -60,8 +60,7 @@ async def delete_article(article_id: int, session: AsyncSession = Depends(get_db
     return await delete_article_serv(session, article_id)
 
 
-@router_article.post("/{article_id}/image", response_model=ArticleOut)
-async def upload_image(
-    article_id: int, file: UploadFile = File(...), session: AsyncSession = Depends(get_db)
-):
-    return await upload_article_image(session, article_id, file)
+@router_article.post("/upload")
+async def upload_image(file: UploadFile = File(...)):
+    key = await upload_image_serv(file)
+    return {"image_key": key}

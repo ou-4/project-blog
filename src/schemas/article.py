@@ -8,7 +8,7 @@ class ArticleCreate(BaseModel):
     title: str
     content: str
     category_id: int
-    image_url: str | None = None
+    image_key: str
 
 
 class ArticleUpdate(BaseModel):

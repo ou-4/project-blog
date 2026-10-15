@@ -28,9 +28,7 @@ async def authenticate_user(session: AsyncSession, data: UserLogin):
     user = await get_user_by_email(session, data.email)
 
     if user is None:
-        raise HTTPException(
-            status_code=401, detail="Пользователь с таким email уже существует или еще не создан"
-        )
+        raise HTTPException(status_code=401, detail="Неверный email или пароль")
 
     pswd = data.password
     hashed_pswd = user.password
@@ -38,4 +36,4 @@ async def authenticate_user(session: AsyncSession, data: UserLogin):
     if check_pswd(pswd, hashed_pswd):
         return user
     else:
-        raise HTTPException(status_code=401, detail="Пароль неправильный")
+        raise HTTPException(status_code=401, detail="Неверный email или пароль")

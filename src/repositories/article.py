@@ -5,7 +5,7 @@ from src.project_blog.models import Article
 
 
 async def create_article_repo(
-    session: AsyncSession, title: str, content: str, category_id: int, image_url: str | None = None
+    session: AsyncSession, title: str, content: str, category_id: int, image_url: str
 ):
     article = Article(title=title, content=content, category_id=category_id, image_url=image_url)
     session.add(article)

@@ -4,7 +4,12 @@ async def test_create_article(auth_client):
     cat_id = response1.json()["id"]
     response2 = await auth_client.post(
         "/articles/",
-        json={"title": "string", "content": "string", "category_id": cat_id, "image_url": "string"},
+        json={
+            "title": "string",
+            "content": "string",
+            "category_id": cat_id,
+            "image_key": "test_key.png",
+        },
     )
     assert response2.status_code == 200
     assert response2.json()["title"] == "string"
@@ -13,7 +18,12 @@ async def test_create_article(auth_client):
 async def test_create_article_no_category(auth_client):
     response = await auth_client.post(
         "/articles/",
-        json={"title": "string", "content": "string", "category_id": 1, "image_url": "string"},
+        json={
+            "title": "string",
+            "content": "string",
+            "category_id": 1,
+            "image_key": "test_key.png",
+        },
     )
     assert response.status_code == 404
 
@@ -23,7 +33,7 @@ async def test_get_articles(auth_client):
     cat_id = response1.json()["id"]
     _ = await auth_client.post(
         "/articles/",
-        json={"title": "string", "content": "string", "category_id": cat_id, "image_url": "string"},
+        json={"title": "string", "content": "string", "category_id": cat_id, "image_key": "string"},
     )
     response3 = await auth_client.get("/articles/")
     assert len(response3.json()) > 0
@@ -36,7 +46,7 @@ async def test_get_article_by_id(auth_client):
 
     response2 = await auth_client.post(
         "/articles/",
-        json={"title": "string", "content": "string", "category_id": cat_id, "image_url": "string"},
+        json={"title": "string", "content": "string", "category_id": cat_id, "image_key": "string"},
     )
 
     art_id = response2.json()["id"]
@@ -52,7 +62,12 @@ async def test_update_article(auth_client):
 
     response2 = await auth_client.post(
         "/articles/",
-        json={"title": "string", "content": "string", "category_id": cat_id, "image_url": "string"},
+        json={
+            "title": "string",
+            "content": "string",
+            "category_id": cat_id,
+            "image_key": "test_key.png",
+        },
     )
 
     art_id = response2.json()["id"]
@@ -76,7 +91,7 @@ async def test_delete_article(auth_client):
     cat_id = response1.json()["id"]
     response2 = await auth_client.post(
         "/articles/",
-        json={"title": "string", "content": "string", "category_id": cat_id, "image_url": "string"},
+        json={"title": "string", "content": "string", "category_id": cat_id, "image_key": "string"},
     )
     art_id = response2.json()["id"]
     _ = await auth_client.delete(f"/articles/{art_id}")

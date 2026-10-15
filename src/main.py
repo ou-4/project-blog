@@ -7,10 +7,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.session import engine, get_db
 from src.middleware import check_auth
+from src.routing.ai import router_ai
 from src.routing.article import router_article
 from src.routing.auth import router_auth
 from src.routing.category import router_category
-from src.services.s3 import ensure_bucket
+from src.services.s3 import ensure_bucket, set_bucket_public_policy
 
 
 @asynccontextmanager
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
         async with engine.connect():
             print("Connected successfully")
         ensure_bucket()
+        set_bucket_public_policy()
         print("MinIO bucket ready")
     except Exception as e:
         print(f"Database connection error: {e}")
@@ -36,6 +38,7 @@ app.middleware("http")(check_auth)
 app.include_router(router_auth)
 app.include_router(router_category)
 app.include_router(router_article)
+app.include_router(router_ai)
 
 
 @app.get("/health")

@@ -11,19 +11,27 @@ from src.repositories.article import (
 )
 from src.repositories.category import get_category_by_id
 from src.schemas.article import ArticleListResponse
-from src.services.s3 import upload_file
+from src.services.s3 import build_public_url, object_exists, upload_file
+from src.worker import index_article
 
 ALLOWED_TYPES = ["image/jpeg", "image/png"]
+MAX_SIZE = 5 * 1024 * 1024
 
 
 async def create_article(
-    session: AsyncSession, title: str, content: str, category_id: int, image_url: str | None = None
+    session: AsyncSession, title: str, content: str, category_id: int, image_key: str
 ):
     if await get_category_by_id(session, category_id) is None:
         raise HTTPException(status_code=404, detail="Категории такой нет")
 
-    article = await create_article_repo(session, title, content, category_id, image_url)
+    if not object_exists(image_key):
+        raise HTTPException(status_code=400, detail="Такого ключа нет")
+
+    url = build_public_url(image_key)
+
+    article = await create_article_repo(session, title, content, category_id, url)
     await session.commit()
+    index_article.delay(article.id)
     return article
 
 
@@ -68,6 +76,7 @@ async def update_article(session, article_id, title, content, category_id, image
 
     updated = await update_article_repo(session, article_id, title, content, category_id, image_url)
     await session.commit()
+    index_article.delay(article.id)
     await session.refresh(updated)
     return updated
 
@@ -86,22 +95,12 @@ async def delete_article(session: AsyncSession, article_id: int):
     return delete
 
 
-async def upload_article_image(session: AsyncSession, article_id: int, file: UploadFile):
-    article = await get_article_by_id_repo(session, article_id)
-
-    if article is None:
-        raise HTTPException(status_code=404, detail="Такого артикуля нет")
-
-    if article.is_deleted:
-        raise HTTPException(status_code=404, detail="Данный артикуль удален")
-
+async def upload_image(file: UploadFile):
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail="Неверный тип данных")
 
-    url = await run_in_threadpool(upload_file, file.file, file.filename)
+    if file.size is not None and file.size > MAX_SIZE:
+        raise HTTPException(status_code=413, detail="Файл весит много")
 
-    article.image_url = url
-    await session.commit()
-    await session.refresh(article)
-
-    return article
+    unique_name = await run_in_threadpool(upload_file, file.file, file.filename)
+    return unique_name

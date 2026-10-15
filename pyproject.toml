@@ -16,6 +16,8 @@ dependencies = [
     "celery>=5.6.3",
     "fastapi>=0.141.1",
     "httpx>=0.28.1",
+    "openai>=3.31.0",
+    "pgvector>=0.5.1",
     "pre-commit>=4.6.1",
     "psycopg>=3.3.4",
     "psycopg2-binary>=2.9.12",
@@ -31,8 +33,6 @@ dependencies = [
     "uvicorn[standard]>=0.52.1",
 ]
 
-[project.scripts]
-project-blog = "project_blog:main"
 
 [build-system]
 requires = ["uv_build>=0.12.1,<0.13.0"]

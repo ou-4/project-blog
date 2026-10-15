@@ -1,8 +1,10 @@
 from datetime import datetime
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import ForeignKey, Index, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.config import settings
 from src.db.base import Base
 
 
@@ -38,3 +40,11 @@ class Article(Base):
             postgresql_using="gin",
         ),
     )
+
+
+class ArticleChunk(Base):
+    __tablename__ = "article_chunks"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    article_id: Mapped[int] = mapped_column(ForeignKey("articles.id"))
+    content: Mapped[str] = mapped_column(Text)
+    embedding = mapped_column(Vector(settings.EMBEDDING_DIM))

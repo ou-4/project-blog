@@ -12,6 +12,15 @@ class Settings(BaseSettings):
     MINIO_BUCKET: str
     CELERY_BROKER_URL: str
     COOKIE_SECURE: bool
+    SMTP_HOST: str
+    SMTP_PORT: int
+    SMTP_FROM: str
+    EMBEDDING_DIM: int
+    OLLAMA_URL: str
+    OLLAMA_MODEL: str
+    GROQ_API_KEY: str
+    GROQ_MODEL: str
+    GROQ_URL: str
     model_config = {"env_file": ".env", "extra": "ignore"}
 
 

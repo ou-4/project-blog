@@ -37,6 +37,15 @@ jobs:
       CELERY_BROKER_URL: amqp://guest:guest@localhost:5672//
       MINIO_PUBLIC_URL: http://localhost:9000
       COOKIE_SECURE: false
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      SMTP_FROM: noreply@blog.com
+      EMBEDDING_DIM: 768
+      OLLAMA_URL: http://localhost:11434
+      OLLAMA_MODEL: nomic-embed-text
+      GROQ_API_KEY: ""
+      GROQ_URL: https://api.groq.com/openai/v1
+      GROQ_MODEL: openai/gpt-oss-120b
 
     steps:
       - uses: actions/checkout@v4

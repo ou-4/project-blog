@@ -6,10 +6,13 @@
 
 - Python 3.12
 - FastAPI
-- PostgreSQL
+- PostgreSQL + pgvector
 - SQLAlchemy + Alembic
 - RabbitMQ + Celery
 - MinIO (S3)
+- Ollama
+- GROQ
+- MailHog
 - Docker + Docker Compose
 - pytest
 
@@ -31,8 +34,15 @@ docker compose up --build
 # Применить миграции
 make migrate
 
+# Скачать модель эмбеддингов в Ollama
+docker exec -it ollama ollama pull nomic-embed-text
+
+
 API: `http://localhost:8000`
 Swagger: `http://localhost:8000/docs`
+MailHog: `http://localhost:8025`
+MinIO Console: `http://localhost:9001`
+RabbitMQ Management: `http://localhost:15672`
 
 ## Запуск тестов
 
@@ -71,7 +81,16 @@ src/
 - `GET /articles/{id}` — одна статья
 - `PUT /articles/{id}` — обновить
 - `DELETE /articles/{id}` — удалить (мягко)
-- `POST /articles/{id}/image` — загрузить картинку
+- `POST /articles/{id}/image` — загрузить картинку, получить image_key
+- `POST /ai/ask` — задать вопрос по блогу (RAG)
+
+AI-помощник (RAG)
+Функционал умного Q&A по блогу:
+1. При создании/обновлении статьи её текст отправляется в Celery-задачу index_article.
+2. Воркер разбивает текст на чанки, считает эмбеддинги через Ollama и сохраняет их в PostgreSQL (pgvector).
+3. Пользователь задаёт вопрос через POST /ai/ask.
+4. Бэкенд считает эмбеддинг вопроса, ищет top-5 релевантных чанков, собирает контекст и отправляет в Groq LLM.
+5. Возвращается ответ LLM + список статей-источников.
 
 ## Проверка через curl
 
@@ -97,6 +116,7 @@ curl -X POST http://localhost:8000/auth/login \
 ```bash
 curl -X POST http://localhost:8000/categories/ \
   -H "Content-Type: application/json" \
+  -b cookies.txt \
   -d '{"name": "Tech"}'
 ```
 
@@ -106,12 +126,22 @@ curl -X POST http://localhost:8000/categories/ \
 curl http://localhost:8000/categories/
 ```
 
+### Загрузить картинку
+
+```bash
+curl -X POST http://localhost:8000/articles/upload \
+  -F "file=@/path/to/image.jpg" \
+  -b cookies.txt
+# → {"image_key": "uuid.png"}
+```
+
 ### Создать статью
 
 ```bash
 curl -X POST http://localhost:8000/articles/ \
   -H "Content-Type: application/json" \
-  -d '{"title": "First Article", "content": "Hello world", "category_id": 1}'
+  -b cookies.txt \
+  -d '{"title": "First Article", "content": "Hello world", "category_id": 1, "image_key": "uuid.png"}'
 ```
 
 ### Список статей с пагинацией
@@ -143,27 +173,33 @@ curl http://localhost:8000/articles/1
 ```bash
 curl -X PUT http://localhost:8000/articles/1 \
   -H "Content-Type: application/json" \
+  -b cookies.txt \
   -d '{"title": "Updated Title"}'
 ```
 
 ### Удалить статью
 
 ```bash
-curl -X DELETE http://localhost:8000/articles/1
+curl -X DELETE http://localhost:8000/articles/1 -b cookies.txt
 ```
 
-### Загрузить картинку
+### Задать вопрос AI-помощнику (RAG)
 
 ```bash
-curl -X POST http://localhost:8000/articles/1/image \
-  -F "file=@/path/to/image.jpg"
-```
-
-### Защищённый эндпоинт (с cookie)
-
-```bash
-curl -X POST http://localhost:8000/articles/ \
+curl -X POST http://localhost:8000/ai/ask \
   -H "Content-Type: application/json" \
   -b cookies.txt \
-  -d '{"title": "Auth Article", "content": "Text", "category_id": 1}'
+  -d '{"question": "What is FastAPI?"}'
+```
+
+Ответ:
+
+```json
+{
+  "answer": "FastAPI is a modern Python web framework...",
+  "sources": [
+    {"article_id": 9, "title": "FastAPI intro", "image_url": "http://localhost:9000/articles/uuid.png"}
+  ]
+}
+```
 ```

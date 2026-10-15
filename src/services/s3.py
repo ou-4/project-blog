@@ -1,3 +1,4 @@
+import json
 import uuid
 
 import boto3
@@ -24,9 +25,33 @@ def ensure_bucket():
 def upload_file(file, filename: str):
     extension = filename.split(".")[-1]
     unique_name = f"{uuid.uuid4()}.{extension}"
-
     s3_client.upload_fileobj(file, settings.MINIO_BUCKET, unique_name)
+    return unique_name
 
-    url = f"{settings.MINIO_PUBLIC_URL}/{settings.MINIO_BUCKET}/{unique_name}"
 
-    return url
+def build_public_url(unique_name):
+    return f"{settings.MINIO_PUBLIC_URL}/{settings.MINIO_BUCKET}/{unique_name}"
+
+
+def object_exists(key):
+    try:
+        s3_client.head_object(Bucket=settings.MINIO_BUCKET, Key=key)
+        return True
+    except Exception:
+        return False
+
+
+def set_bucket_public_policy():
+    policy_dict = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"AWS": ["*"]},
+                "Action": ["s3:GetObject"],
+                "Resource": [f"arn:aws:s3:::{settings.MINIO_BUCKET}/*"],
+            }
+        ],
+    }
+
+    s3_client.put_bucket_policy(Bucket=settings.MINIO_BUCKET, Policy=json.dumps(policy_dict))
